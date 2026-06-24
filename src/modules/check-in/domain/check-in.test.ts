@@ -7,7 +7,6 @@ import {
   RESET_THRESHOLD, KIND, makeDraft, canCommit, showsResetFields,
   applyChange, commitDraft, applyEdit, isEdited, suggestedKind,
   CURRENT_SCHEMA, MIGRATIONS, stampSchema, recordVersion, migrateRecord, migrateAll,
-  STORAGE_MODE, decideStorageMode,
   STRIDE, entryDates, recordsForDate, weekStart, addDays, windowDates, stepAnchor, defaultAnchor,
 } from './check-in.js'
 
@@ -195,20 +194,7 @@ test('a registered migration chain advances an old record [simulated]', () => {
   assert.equal((cur as { score: number }).score, 3)
 })
 
-// suppress unused-import warnings for constants verified via usage above
 void MIGRATIONS
-void STORAGE_MODE
-
-// ── storage mode decision ──
-test('storage mode is persistent when probe round-trips', () => {
-  assert.equal(decideStorageMode('probe-abc', 'probe-abc'), STORAGE_MODE.PERSISTENT)
-})
-
-test('storage mode is ephemeral when probe value does not come back', () => {
-  assert.equal(decideStorageMode('probe-abc', null), STORAGE_MODE.EPHEMERAL)
-  assert.equal(decideStorageMode('probe-abc', undefined), STORAGE_MODE.EPHEMERAL)
-  assert.equal(decideStorageMode('probe-abc', 'different'), STORAGE_MODE.EPHEMERAL)
-})
 
 // ── history navigation ──
 const navRecs = [

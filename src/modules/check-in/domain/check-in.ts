@@ -190,18 +190,6 @@ export function migrateAll(records: unknown[]): MigrateAllResult {
 }
 
 // ════════════════════════════════════════════════════════════════════════
-//  STORAGE MODE DECISION (kept for test coverage; web app always uses
-//  localStorage and never calls these at runtime)
-// ════════════════════════════════════════════════════════════════════════
-
-export const STORAGE_MODE = { PERSISTENT: 'persistent', EPHEMERAL: 'ephemeral' } as const
-export type StorageMode = typeof STORAGE_MODE[keyof typeof STORAGE_MODE]
-
-export function decideStorageMode(sentinelWritten: string, valueReadBack: unknown): StorageMode {
-  return valueReadBack === sentinelWritten ? STORAGE_MODE.PERSISTENT : STORAGE_MODE.EPHEMERAL
-}
-
-// ════════════════════════════════════════════════════════════════════════
 //  HISTORY NAVIGATION (pure, date-string based: "YYYY-MM-DD")
 // ════════════════════════════════════════════════════════════════════════
 

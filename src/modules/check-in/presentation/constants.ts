@@ -1,4 +1,4 @@
-import type { Kind } from '../domain/check-in.js'
+import type { Kind, CheckInRecord } from '../domain/check-in.js'
 
 export interface ScaleEntry {
   v: number
@@ -48,3 +48,10 @@ export const dayKey = (d: Date = new Date()): string => {
 export const stamp = (): string => new Date().toISOString()
 
 export const uid = (): string => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+export function summarize(r: CheckInRecord): string {
+  const bits = [r.first, r.note, r.what, r.body, r.step, r.went, r.tomorrow].filter(Boolean)
+  if (!bits.length) return 'score only'
+  const s = bits.join(' · ')
+  return s.length > 64 ? s.slice(0, 63) + '…' : s
+}
