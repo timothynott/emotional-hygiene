@@ -15,15 +15,15 @@ Three daily check-ins plus an on-demand reset ritual:
 
 ## Tech stack
 
-- React + Vite (PWA)
+- React + Vite (PWA), TypeScript
 - localStorage for persistence
 - Deployed via Cloudflare Pages
 
 ## Local development
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173) in your browser. On the same local network, your phone can reach the dev server at `http://<your-laptop-ip>:5173`.
@@ -31,18 +31,18 @@ Open [http://localhost:5173](http://localhost:5173) in your browser. On the same
 ## Build
 
 ```bash
-npm run build
-npm run preview   # serve the production build locally
+pnpm build
+pnpm preview   # serve the production build locally
 ```
 
 ## Deploy
 
-The `main` branch auto-deploys to Cloudflare Pages. Build command: `npm run build`. Output directory: `dist`.
+The `main` branch auto-deploys to Cloudflare Pages. Build command: `pnpm build`. Output directory: `dist`.
 
 ## Tests
 
 Domain logic is covered by a pure Node.js test suite (no framework required):
 
 ```bash
-npm test
+pnpm test
 ```
