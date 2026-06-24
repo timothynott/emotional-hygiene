@@ -1,0 +1,12 @@
+scratch/
+node_modules/
+dist/
+dist-ssr/
+.env
+.env.local
+.env.*.local
+*.local
+.DS_Store
+.cache/
+.vite/
+dev-dist/
