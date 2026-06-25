@@ -1,7 +1,8 @@
 # Milestones
 
-## Milestone 0 — Web MVP: measurement on the phone
+## Milestone 0 — Web MVP: measurement on the phone ✓
 
+**Status:** Complete — 2026-06-24  
 **Goal:** A deployable PWA the user can install on their phone and immediately start recording data.
 
 **Scope:**
