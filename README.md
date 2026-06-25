@@ -15,9 +15,13 @@ Three daily check-ins plus an on-demand reset ritual:
 
 ## Tech stack
 
-- React + Vite (PWA), TypeScript
-- localStorage for persistence
-- Deployed via Cloudflare Pages
+| Layer | Choice | Notes |
+|---|---|---|
+| UI | React + Vite, TypeScript | PWA, installable on mobile |
+| Storage | `localStorage` | No backend — all data stays on device |
+| Hosting | Cloudflare Pages | Branch preview deploys included |
+
+**To deploy this yourself you'll need a Cloudflare account.** The deployment guide is at [docs/deployment.md](docs/deployment.md). If you want to host elsewhere (Vercel, Netlify, GitHub Pages, self-hosted), the app is a standard static Vite build — a PR adding an alternative deploy path is welcome.
 
 ## Local development
 
@@ -35,9 +39,9 @@ pnpm build
 pnpm preview   # serve the production build locally
 ```
 
-## Deploy
+## Docs
 
-The `main` branch auto-deploys to Cloudflare Pages. Build command: `pnpm build`. Output directory: `dist`.
+See [docs/](docs/index.md) for the glossary and deployment guide.
 
 ## Tests
 
