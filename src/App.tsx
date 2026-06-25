@@ -25,7 +25,7 @@ function makeSeedRecords(): CheckInRecord[] {
   const multiDay = new Date(today); multiDay.setDate(multiDay.getDate() - 21)
   const multiDate = dayKey(multiDay)
 
-  for (let back = 92; back >= 0; back--) {
+  for (let back = 92; back >= 1; back--) {
     const d = new Date(today); d.setDate(d.getDate() - back)
     const date = dayKey(d)
     if (date === multiDate || Math.random() < 0.35) continue
@@ -139,6 +139,10 @@ export default function App() {
 
   const commitDraft = (f: Draft) => {
     if (f.score == null) return
+    if (f.kind !== 'reset' && records.some(r => r.date === f.date && r.kind === f.kind)) {
+      setErr(`A ${KINDS[f.kind].label} entry for ${f.date} already exists — edit it instead of logging a new one.`)
+      return
+    }
     try {
       const rec = domainCommitDraft(f, stamp())
       const next = [...records, rec].sort((a, b) => a.ts.localeCompare(b.ts))
