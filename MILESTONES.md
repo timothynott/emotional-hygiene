@@ -1,6 +1,6 @@
 # Milestones
 
-## Milestone 1 — Web MVP: measurement on the phone
+## Milestone 0 — Web MVP: measurement on the phone
 
 **Goal:** A deployable PWA the user can install on their phone and immediately start recording data.
 
@@ -15,12 +15,20 @@
 - Deployed to Cloudflare Pages via GitHub; installable as PWA
 
 **Deferred to later milestones:**
-- 14-day trend chart
 - Clinical instruments (PHQ-9 / GAD-7)
 - Therapist report
 - Scheduled push notifications
 
 ---
+
+## Milestone 1 - Coping mechanism quick reference
+
+**Goal:** An editable list of quick reference coping mechanisms that is accessible from the home page
+**Scope:**
+- CRUD the list comprising of coping mechanisms defined as
+  - Title
+  - Description
+- Static footer on the home page to bring up the list and click through to the description.
 
 ## Milestone 2 — Clinical instruments
 
@@ -43,6 +51,7 @@
 **Scope:**
 - Midday check-in notification (the core trigger)
 - Morning and evening reminders
+- Bi-weekly reminder for clinical instruments or during an export?
 - Deep links from notification into the correct check-in form
 - Data migration path from the web PWA (export → import)
 - iOS + Android distribution
