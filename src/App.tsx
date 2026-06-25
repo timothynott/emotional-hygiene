@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, type ReactNode } from 'react'
 import {
   makeDraft, commitDraft as domainCommitDraft, applyEdit,
-  type CheckInRecord, type Draft, type Kind,
-  CURRENT_SCHEMA,
+  type CheckInRecord, type Draft, type Kind, type Stride,
+  CURRENT_SCHEMA, defaultAnchor,
 } from './modules/check-in/domain/check-in.js'
 import {
   loadRecords, saveRecords, loadDraft, saveDraft, clearDraft,
@@ -10,6 +10,7 @@ import {
 } from './modules/check-in/infrastructure/storage.js'
 import { KINDS, dayKey, stamp, uid } from './modules/check-in/presentation/constants.js'
 import Home from './modules/check-in/presentation/pages/Home.js'
+import History from './modules/check-in/presentation/pages/History.js'
 import Editor from './modules/check-in/presentation/components/Editor.js'
 import DiscardDialog from './modules/check-in/presentation/components/DiscardDialog.js'
 
@@ -64,6 +65,7 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState<string | null>(null)
   const [flashSlot, setFlashSlot] = useState<Kind | null>(null)
+  const [historyAnchor, setHistoryAnchor] = useState<string>(dayKey())
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Defined before effects so they can safely reference it.
@@ -88,6 +90,7 @@ export default function App() {
     const d = loadDraft()
     const s = loadSettings()
     setRecords(r); setDraft(d); setSettings(s)
+    setHistoryAnchor(defaultAnchor(r, dayKey()))
     if (d) navigate(VIEW.DRAFT)
     setLoading(false)
   }, []) // navigate is stable on mount; intentionally omitted from deps
@@ -159,6 +162,11 @@ export default function App() {
 
   const saveFromFork = () => { if (draft) commitDraft(draft); setShowDiscard(false) }
 
+  const setStride = (s: Stride) => {
+    const ns = { ...settings, stride: s }
+    setSettings(ns); saveSettings(ns)
+  }
+
   const saveEdit = (f: Draft) => {
     if (!editing || f.score == null) return
     const updated = applyEdit(editing, { ...f, score: f.score }, stamp())
@@ -215,10 +223,15 @@ export default function App() {
 
   if (view === VIEW.HISTORY) {
     return wrap(
-      <div>
-        <p style={{ fontSize: 13, color: '#717c8c' }}>History coming soon.</p>
-        <button onClick={() => history.back()} style={{ marginTop: 12, background: 'none', border: 'none', color: '#717c8c', fontSize: 13, cursor: 'pointer', padding: 0 }}>← back</button>
-      </div>
+      <History
+        records={records}
+        anchor={historyAnchor}
+        stride={settings.stride}
+        onEdit={r => enterEdit(r, VIEW.HISTORY)}
+        onAnchor={setHistoryAnchor}
+        onStride={setStride}
+        back={() => history.back()}
+      />
     )
   }
 
