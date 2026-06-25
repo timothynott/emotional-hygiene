@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from 'react'
+import { useState, useRef, useEffect, type ReactNode } from 'react'
 import {
   makeDraft, commitDraft as domainCommitDraft, applyEdit,
   type CheckInRecord, type Draft, type Kind,
@@ -8,8 +8,10 @@ import {
   loadRecords, saveRecords, loadDraft, saveDraft, clearDraft,
   loadSettings, saveSettings, type Settings,
 } from './modules/check-in/infrastructure/storage.js'
-import { KINDS, dayKey, stamp, uid, summarize } from './modules/check-in/presentation/constants.js'
+import { KINDS, dayKey, stamp, uid } from './modules/check-in/presentation/constants.js'
 import Home from './modules/check-in/presentation/pages/Home.js'
+import Editor from './modules/check-in/presentation/components/Editor.js'
+import DiscardDialog from './modules/check-in/presentation/components/DiscardDialog.js'
 
 const VIEW = { HOME: 'home', DRAFT: 'draft', EDIT: 'edit', HISTORY: 'history' } as const
 type View = typeof VIEW[keyof typeof VIEW]
@@ -55,12 +57,15 @@ export default function App() {
   const [settings, setSettings] = useState<Settings>({ discardConfirm: true, stride: 'day' })
   const [view, setView] = useState<View>(VIEW.HOME)
   const [editing, setEditing] = useState<CheckInRecord | null>(null)
+  const [editDraft, setEditDraft] = useState<Draft | null>(null)
   const [editFrom, setEditFrom] = useState<View>(VIEW.HISTORY)
   const [showDiscard, setShowDiscard] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState<string | null>(null)
   const [flashSlot, setFlashSlot] = useState<Kind | null>(null)
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   // Defined before effects so they can safely reference it.
   const navigate = (v: View) => {
     setView(v)
@@ -85,7 +90,7 @@ export default function App() {
     setRecords(r); setDraft(d); setSettings(s)
     if (d) navigate(VIEW.DRAFT)
     setLoading(false)
-  }, []) // navigate is stable on mount; intentionally omitting from deps
+  }, []) // navigate is stable on mount; intentionally omitted from deps
 
   useEffect(() => {
     try { window.scrollTo({ top: 0, behavior: 'auto' }) } catch { /* noop */ }
@@ -108,10 +113,25 @@ export default function App() {
     setDraft(d); saveDraft(d); navigate(VIEW.DRAFT)
   }
 
+  const enterEdit = (record: CheckInRecord, from: View) => {
+    setEditFrom(from)
+    setEditing(record)
+    setEditDraft({ id: record.id, kind: record.kind, date: record.date, score: record.score,
+      first: record.first, note: record.note, what: record.what, body: record.body,
+      step: record.step, went: record.went, tomorrow: record.tomorrow })
+    navigate(VIEW.EDIT)
+  }
+
   const openSlot = (kind: Kind) => {
     const existing = records.filter(r => r.date === dayKey() && r.kind === kind).slice(-1)[0]
-    if (existing) { setEditFrom(VIEW.HOME); setEditing(existing); navigate(VIEW.EDIT) }
+    if (existing) enterEdit(existing, VIEW.HOME)
     else startDraft(kind)
+  }
+
+  const onDraftChange = (next: Draft) => {
+    setDraft(next)
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => saveDraft(next), 250)
   }
 
   const commitDraft = (f: Draft) => {
@@ -143,7 +163,7 @@ export default function App() {
     if (!editing || f.score == null) return
     const updated = applyEdit(editing, { ...f, score: f.score }, stamp())
     const next = records.map(r => r.id === updated.id ? updated : r).sort((a, b) => a.ts.localeCompare(b.ts))
-    saveRecords(next); setRecords(next); setEditing(null); navigate(editFrom)
+    saveRecords(next); setRecords(next); navigate(editFrom)
     showToast(`${KINDS[updated.kind].label} updated`)
     flash(updated.kind, updated.date)
   }
@@ -175,21 +195,21 @@ export default function App() {
 
   if (view === VIEW.DRAFT && draft) {
     return wrap(
-      <div>
+      <>
         {err && <div role="alert" style={{ marginBottom: 14, padding: '10px 12px', borderRadius: 8, background: '#3a1f1f', border: '1.5px solid #6b3b3b', color: '#e7b3b3', fontSize: 13 }}>{err}</div>}
-        <p style={{ fontSize: 13, color: '#717c8c' }}>Editor coming soon — {draft.kind} draft in progress.</p>
-        <button onClick={requestDiscard} style={{ marginTop: 12, background: 'none', border: 'none', color: '#717c8c', fontSize: 13, cursor: 'pointer', padding: 0 }}>← discard & go back</button>
-        {showDiscard && <p style={{ fontSize: 12, color: '#caa24e', marginTop: 8 }}>Discard dialog coming soon. <button onClick={() => doDiscardWithPref(false)} style={{ background: 'none', border: 'none', color: '#caa24e', cursor: 'pointer', fontSize: 12 }}>confirm discard</button> or <button onClick={saveFromFork} style={{ background: 'none', border: 'none', color: '#8aa78f', cursor: 'pointer', fontSize: 12 }}>save & log</button></p>}
-      </div>
+        <Editor key={draft.id} kind={draft.kind} value={draft} mode="draft"
+          onChange={onDraftChange} onCommit={commitDraft}
+          onDiscardRequest={requestDiscard} onCancelEdit={() => {}} />
+        {showDiscard && <DiscardDialog onDiscard={doDiscardWithPref} onSave={saveFromFork} onCancel={() => setShowDiscard(false)} />}
+      </>
     )
   }
 
-  if (view === VIEW.EDIT && editing) {
+  if (view === VIEW.EDIT && editing && editDraft) {
     return wrap(
-      <div>
-        <p style={{ fontSize: 13, color: '#717c8c' }}>Editor coming soon — editing {summarize(editing)}.</p>
-        <button onClick={() => { setEditing(null); history.back() }} style={{ marginTop: 12, background: 'none', border: 'none', color: '#717c8c', fontSize: 13, cursor: 'pointer', padding: 0 }}>← cancel</button>
-      </div>
+      <Editor key={editing.id} kind={editing.kind} value={editDraft} mode="edit"
+        onChange={v => setEditDraft(v)} onCommit={saveEdit}
+        onDiscardRequest={() => {}} onCancelEdit={() => history.back()} />
     )
   }
 
@@ -208,7 +228,7 @@ export default function App() {
       flashSlot={flashSlot}
       onOpenSlot={openSlot}
       onStartReset={() => startDraft('reset')}
-      onEditRecord={r => { setEditFrom(VIEW.HOME); setEditing(r); navigate(VIEW.EDIT) }}
+      onEditRecord={r => enterEdit(r, VIEW.HOME)}
       onGoHistory={() => navigate(VIEW.HISTORY)}
       onSeedData={seedData}
       onClearData={clearData}
